@@ -8,27 +8,17 @@
 
 import React, { useState, useEffect } from 'react'
 // import type { PropsWithChildren } from 'react'
-import ErrorPage from './screen/errorPage'
 import Home from './screen/home'
+import Splash from './screen/splash'
 
 const App = () => {
-  const [error, setError] = useState<any>()
+  const [showSplash, setshowSplash] = useState<boolean>(true)
 
-  useEffect(() => {}, [error])
+  useEffect(() => {
+    setTimeout(() => setshowSplash(false), 3000)
+  }, [showSplash])
 
-  const onReload = () => {
-    setError(null)
-  }
-
-  return (
-    <>
-      {error ? (
-        <ErrorPage message={error?.nativeEvent.title} onReload={onReload} />
-      ) : (
-        <Home setError={setError} />
-      )}
-    </>
-  )
+  return <>{showSplash ? <Splash /> : <Home />}</>
 }
 
 export default App

@@ -1,41 +1,24 @@
 /* eslint-disable prettier/prettier */
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react/react-in-jsx-scope */
+// cSpell:ignore setcan
 import { useRef, useEffect, useState } from 'react'
 import { WebView } from 'react-native-webview'
-import {
-  View,
-  Text,
-  StyleSheet,
-  ToastAndroid,
-  BackHandler,
-  Image,
-} from 'react-native'
+import { View, StyleSheet, ToastAndroid, BackHandler } from 'react-native'
+import Orientation from 'react-native-orientation-locker'
+import KeepAwake from 'react-native-keep-awake'
 import Navigation from '../components/navigation'
-import Icon from 'react-native-vector-icons/Ionicons'
+import ErrorPage from '../components/errorPage'
+import Loading from '../components/loading'
 
 type props = {
-  setError: any
+  // setError: any
 }
 
-const Loading = () => {
-  return (
-    <View style={styles.loading}>
-      <Image
-        style={styles.loadingImage}
-        source={require('../assets/logo-text.png')}
-      />
-      <View style={styles.loadingWrapper}>
-        <Icon name="ios-rocket" size={30} color="#fff" />
-        <Text style={styles.loadingText}>Loading</Text>
-      </View>
-    </View>
-  )
-}
-
-const Home: React.FC<props> = ({ setError }) => {
+const Home: React.FC<props> = () => {
   const [canBack, setcanBack] = useState<boolean>(true)
   const [canForward, setcanForward] = useState<boolean>(false)
+  const [error, setError] = useState<any>()
   let lastBackButtonPress: any = null
   const webRef = useRef<any>()
 
@@ -47,9 +30,14 @@ const Home: React.FC<props> = ({ setError }) => {
       BackHandler.removeEventListener('hardwareBackPress', backHandler)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [canBack])
 
   const backHandler = () => {
+    if (canBack) {
+      webRef.current.goBack()
+      return true
+    }
+
     const currentTime = new Date().getTime()
 
     if (lastBackButtonPress && currentTime - lastBackButtonPress < 2000) {
@@ -62,9 +50,20 @@ const Home: React.FC<props> = ({ setError }) => {
     return true
   }
 
-  const navStateChange = (navState) => {
+  const navStateChange = (navState: any) => {
     setcanBack(navState.canGoBack)
     setcanForward(navState.canGoForward)
+
+    const isMediaPlaying =
+      navState.title === 'Media playing' || navState.title === 'playing'
+
+    if (isMediaPlaying) {
+      Orientation.lockToLandscape()
+      KeepAwake.activate()
+    } else {
+      Orientation.unlockAllOrientations()
+      KeepAwake.deactivate()
+    }
   }
 
   const toast = (title: string = '') => {
@@ -84,15 +83,17 @@ const Home: React.FC<props> = ({ setError }) => {
         ref={webRef}
         containerStyle={styles.webview}
         onError={(err) => setError(err)}
-        // renderError={false}
         startInLoadingState
         renderLoading={() => <Loading />}
         allowsFullscreenVideo
-        allowsInlineMediaPlayback
+        // allowsInlineMediaPlayback
         allowsBackForwardNavigationGestures
+        mediaPlaybackRequiresUserAction={false}
         source={{ uri: 'https://9animetv.to/' }}
         onNavigationStateChange={navStateChange}
         useWebView2
+        // contentMode="desktop"
+        renderError={() => <ErrorPage message={error.nativeEvent.title} />}
         // onShouldStartLoadWithRequest={(request) => {
         //   console.log(request)
         //   return request.url.startsWith('https://9animetv.to/')
@@ -103,14 +104,14 @@ const Home: React.FC<props> = ({ setError }) => {
           if (canBack) {
             webRef.current.goBack()
           } else {
-            toast("Can't go back")
+            toast('No back')
           }
         }}
         onForward={() => {
           if (canForward) {
             webRef.current.goForward()
           } else {
-            toast("Cant't go forward")
+            toast('No next')
           }
         }}
         onHome={() => {
@@ -137,33 +138,8 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     fontSize: 9,
   },
-  loading: {
-    backgroundColor: '#0E0E0E',
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    left: 0,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  loadingText: {
-    fontSize: 20,
-    fontWeight: 'bold',
-    textAlign: 'center',
-    color: '#fff',
-  },
-  loadingImage: {
-    height: 50,
-    resizeMode: 'contain',
-  },
-  loadingWrapper: {
-    marginTop: 20,
-    display: 'flex',
-    alignItems: 'center',
-    flexDirection: 'row',
-    gap: 10,
+  errContainer: {
+    flex: 1,
   },
 })
 
