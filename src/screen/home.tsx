@@ -6,6 +6,8 @@ import { useRef, useEffect, useState } from 'react'
 import { WebView } from 'react-native-webview'
 import { View, StyleSheet, ToastAndroid, BackHandler } from 'react-native'
 import Orientation from 'react-native-orientation-locker'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+
 import KeepAwake from 'react-native-keep-awake'
 import Navigation from '../components/navigation'
 import ErrorPage from '../components/errorPage'
@@ -17,10 +19,15 @@ type props = {
 
 const Home: React.FC<props> = () => {
   const [canBack, setcanBack] = useState<boolean>(true)
+  const [currentUrl, setcurrentUrl] = useState<string>('')
   const [canForward, setcanForward] = useState<boolean>(false)
   const [error, setError] = useState<any>()
   let lastBackButtonPress: any = null
   const webRef = useRef<any>()
+
+  useEffect(() => {
+    getUrl()
+  }, [])
 
   useEffect(() => {
     // webRef.current.injectJavaScript("window.alert('welcome to 9anime')")
@@ -29,8 +36,21 @@ const Home: React.FC<props> = () => {
     return () => {
       BackHandler.removeEventListener('hardwareBackPress', backHandler)
     }
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canBack])
+
+  const getUrl = async () => {
+    const url = (await AsyncStorage.getItem('currentUrl')) as string
+    setcurrentUrl(url)
+  }
+
+  const urlStore = async (url: string) => {
+    try {
+      await AsyncStorage.setItem('currentUrl', url)
+      // eslint-disable-next-line no-catch-shadow
+    } catch (error) {}
+  }
 
   const backHandler = () => {
     if (canBack) {
@@ -50,9 +70,11 @@ const Home: React.FC<props> = () => {
     return true
   }
 
-  const navStateChange = (navState: any) => {
+  const navStateChange = async (navState: any) => {
     setcanBack(navState.canGoBack)
     setcanForward(navState.canGoForward)
+
+    await urlStore(navState.url)
 
     const isMediaPlaying =
       navState.title === 'Media playing' || navState.title === 'playing'
@@ -76,6 +98,7 @@ const Home: React.FC<props> = () => {
     )
   }
 
+  // TODO: injection script for redirecting
   return (
     <View style={styles.container}>
       <WebView
@@ -89,7 +112,9 @@ const Home: React.FC<props> = () => {
         // allowsInlineMediaPlayback
         allowsBackForwardNavigationGestures
         mediaPlaybackRequiresUserAction={false}
-        source={{ uri: 'https://9animetv.to/' }}
+        source={{
+          uri: currentUrl,
+        }}
         onNavigationStateChange={navStateChange}
         useWebView2
         // contentMode="desktop"

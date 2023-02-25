@@ -15,21 +15,21 @@ const Navigation: React.FC<props> = ({ onBack, onHome, onForward }) => {
       <Icon
         style={styles.button}
         name="ios-chevron-back"
-        size={30}
+        size={28}
         color={'#fff'}
         onPress={onBack}
       />
       <Icon
         style={styles.button}
         name="ios-planet-outline"
-        size={30}
+        size={28}
         color={'#fff'}
         onPress={onHome}
       />
       <Icon
         style={styles.button}
         name="ios-chevron-forward"
-        size={30}
+        size={28}
         color={'#fff'}
         onPress={onForward}
       />
@@ -44,7 +44,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     backgroundColor: '#5A2E98',
-    padding: 10,
+    padding: 8,
   },
   button: {
     paddingHorizontal: 10,
