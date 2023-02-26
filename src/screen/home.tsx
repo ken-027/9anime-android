@@ -2,9 +2,17 @@
 /* eslint-disable react/no-unstable-nested-components */
 /* eslint-disable react/react-in-jsx-scope */
 // cSpell:ignore setcan
-import { useRef, useEffect, useState } from 'react'
+import { useRef, useEffect, useState, useCallback } from 'react'
 import { WebView } from 'react-native-webview'
-import { View, StyleSheet, ToastAndroid, BackHandler } from 'react-native'
+import {
+  View,
+  StyleSheet,
+  ToastAndroid,
+  BackHandler,
+  Image,
+  ScrollView,
+  RefreshControl,
+} from 'react-native'
 import Orientation from 'react-native-orientation-locker'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 
@@ -21,13 +29,14 @@ const Home: React.FC<props> = () => {
   const [canBack, setcanBack] = useState<boolean>(true)
   const [currentUrl, setcurrentUrl] = useState<string>('')
   const [canForward, setcanForward] = useState<boolean>(false)
+  const [onTop, setonTop] = useState<boolean>(true)
   const [error, setError] = useState<any>()
   let lastBackButtonPress: any = null
   const webRef = useRef<any>()
 
   useEffect(() => {
     getUrl()
-  }, [])
+  }, [currentUrl])
 
   useEffect(() => {
     // webRef.current.injectJavaScript("window.alert('welcome to 9anime')")
@@ -40,6 +49,10 @@ const Home: React.FC<props> = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [canBack])
 
+  const onRefresh = useCallback(() => {
+    webRef.current.reload()
+  }, [])
+
   const getUrl = async () => {
     const url = (await AsyncStorage.getItem('currentUrl')) as string
     setcurrentUrl(url)
@@ -48,6 +61,7 @@ const Home: React.FC<props> = () => {
   const urlStore = async (url: string) => {
     try {
       await AsyncStorage.setItem('currentUrl', url)
+      setcurrentUrl(url)
       // eslint-disable-next-line no-catch-shadow
     } catch (error) {}
   }
@@ -100,8 +114,33 @@ const Home: React.FC<props> = () => {
 
   // TODO: injection script for redirecting
   return (
-    <View style={styles.container}>
+    <ScrollView
+      refreshControl={
+        <RefreshControl
+          refreshing={false}
+          enabled={onTop}
+          onRefresh={onRefresh}
+        />
+      }
+      contentContainerStyle={styles.container}>
+      <View style={styles.titleBar}>
+        <Image
+          style={styles.headerLogo}
+          source={require('../assets/logo-text.png')}
+        />
+        {/* <Text numberOfLines={1} ellipsizeMode="head" style={styles.barText}>
+          Anime name
+        </Text> */}
+      </View>
       <WebView
+        onScroll={(event) => {
+          const { contentOffset } = event.nativeEvent
+          if (contentOffset.y > 0) {
+            setonTop(false)
+          } else {
+            setonTop(true)
+          }
+        }}
         pullToRefreshEnabled
         ref={webRef}
         containerStyle={styles.webview}
@@ -139,12 +178,14 @@ const Home: React.FC<props> = () => {
             toast('No next')
           }
         }}
-        onHome={() => {
-          webRef.current.reload()
+        onHome={async () => {
+          const home = 'https://9animetv.to/home'
+          await AsyncStorage.setItem('currentUrl', home)
+          await getUrl()
         }}
       />
       {/* <Text style={styles.bottomText}>9anime</Text> */}
-    </View>
+    </ScrollView>
   )
 }
 
@@ -153,7 +194,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   webview: {
-    backgroundColor: '#5A2E98',
+    paddingTop: 10,
+    backgroundColor: '#0E0E0E',
   },
   bottomText: {
     backgroundColor: '#5A2E98',
@@ -165,6 +207,22 @@ const styles = StyleSheet.create({
   },
   errContainer: {
     flex: 1,
+  },
+  titleBar: {
+    backgroundColor: '#0E0E0E',
+  },
+  barText: {
+    color: '#fff',
+    textAlign: 'center',
+    fontSize: 20,
+    padding: 10,
+    paddingBottom: 15,
+    fontWeight: 'bold',
+  },
+  headerLogo: {
+    height: 30,
+    width: 'auto',
+    resizeMode: 'contain',
   },
 })
 

@@ -8,6 +8,7 @@
 
 import React, { useState, useEffect } from 'react'
 // import type { PropsWithChildren } from 'react'
+import { SafeAreaView, StatusBar } from 'react-native'
 import Home from './screen/home'
 import Splash from './screen/splash'
 import AsyncStorage from '@react-native-async-storage/async-storage'
@@ -19,7 +20,7 @@ const App = () => {
     const currentUrl = await AsyncStorage.getItem('currentUrl')
 
     if (!currentUrl) {
-      await AsyncStorage.setItem('currentUrl', 'https://9animetv.to/')
+      await AsyncStorage.setItem('currentUrl', 'https://9animetv.to/home')
     }
   }
 
@@ -28,7 +29,12 @@ const App = () => {
     checkStorage()
   }, [showSplash])
 
-  return <>{showSplash ? <Splash /> : <Home />}</>
+  return (
+    <SafeAreaView style={{ flex: 1 }}>
+      <StatusBar backgroundColor="#0E0E0E" barStyle="light-content" />
+      {showSplash ? <Splash /> : <Home />}
+    </SafeAreaView>
+  )
 }
 
 export default App

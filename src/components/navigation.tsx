@@ -21,7 +21,7 @@ const Navigation: React.FC<props> = ({ onBack, onHome, onForward }) => {
       />
       <Icon
         style={styles.button}
-        name="ios-planet-outline"
+        name="ios-home"
         size={28}
         color={'#fff'}
         onPress={onHome}
